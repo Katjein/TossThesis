@@ -1,0 +1,25 @@
+%% Master Thesis: Data Analysis
+% Biomechanical analysis of a toss to hands in cheer sport: qualitative and
+% quantitative characteristics
+
+% by Katja Korte
+% katja.korte@sport.uni-giessen.de
+
+clear
+clc
+
+%% LOAD VARIABLES
+files = dir('*.mat');
+for i=1:length(files)
+    load(files(i).name);
+end
+
+ASIS_F = zeros([1013, 4]);
+for ctr = 1:4
+    ASIS_F(:, ctr) = strcat("NL0", str(ctr),".ASIS_F");
+end
+
+maxLength = max(length(NL01.ASIS_F), length(NL02.ASIS_F), length(NL03.ASIS_F), length(NL04.ASIS_F));
+plot(length(NL01.ASIS_F), NL02.ASIS_F, NL03.ASIS_F, NL04.ASIS_F)
+
+%% 
