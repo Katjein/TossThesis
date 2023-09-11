@@ -3,23 +3,295 @@
 % quantitative characteristics
 
 % by Katja Korte
-% katja.korte@sport.uni-giessen.de
+% katja.korte@sport.uni-giessen.de / 
+% katjakorte@gmx.net
 
 clear
 clc
+close all
 
-%% LOAD VARIABLES
-files = dir('*.mat');
-for i=1:length(files)
-    load(files(i).name);
+%% Load Variables
+load("dataProcessed.mat")
+load("surveyData.mat")
+nTosses = length(startToss);
+
+
+%% COG EXPERIMENTS
+% COG = distal / (distal + proximal)
+for ctr = 1 : nTosses
+    base.cog{ctr} = CoG_Base(base, ctr);
+    flyer.cog{ctr} = CoG_Flyer(flyer, ctr);
 end
 
-ASIS_F = zeros([1013, 4]);
-for ctr = 1:4
-    ASIS_F(:, ctr) = strcat("NL0", str(ctr),".ASIS_F");
+%% Flyer bodyline
+% expecting early/quick hip opening
+% angle: Knee to Clav via Pelvis
+hipAngle = HipAngleFlyer(flyer, 20);
+
+%% PLOTS
+% OVERALL
+% Plot best five vs. worst five
+y = 0:0.5:100;
+figure("Name", "Overall")
+    subplot(3, 1, 1)
+    for i = overall.best
+        t01 = plot(y, (flyer.ASIS.interp.x(:, i) - flyer.ASIS.interp.x(1, i))/1000, "Color", "k");
+        hold on
+    end
+    for i = overall.least
+        t02 = plot(y, (flyer.ASIS.interp.x(:, i) - flyer.ASIS.interp.x(1, i))/1000, "Color", "k", "LineStyle", "--");
+    end
+    grid on
+    xlabel("Progress [%]")
+    xlim([0, 100])
+    ylabel("Lateral [m]")
+    legend([t01(1), t02(1)], ["highest rated", "lowest rated"])
+    subplot(3, 1, 2)
+    for i = overall.best
+        t01 = plot(y, (flyer.ASIS.interp.y(:, i) - flyer.ASIS.interp.y(1, i))/-1000, "Color", "k");
+        hold on
+    end
+    for i = overall.least
+        t02 = plot(y, (flyer.ASIS.interp.y(:, i) - flyer.ASIS.interp.y(1, i))/-1000, "Color", "k", "LineStyle", "-.");
+    end
+    grid on
+    xlabel("Progress [%]")
+    xlim([0, 100])
+    ylabel("Frontal [m]")
+    legend([t01(1), t02(1)], ["highest rated", "lowest rated"])
+    subplot(3, 1, 3)
+    for i = overall.best
+        t01 = plot(y, (flyer.ASIS.interp.z(:, i) - flyer.ASIS.interp.z(1, i))/1000, "Color", "k");
+        hold on
+    end
+    for i = overall.least
+        t02 = plot(y, (flyer.ASIS.interp.z(:, i) - flyer.ASIS.interp.z(1, i))/1000, "Color", "k", "LineStyle", ":");
+    end
+    grid on
+    xlabel("Progress [%]")
+    xlim([0, 100])
+    ylabel("Height [m]")
+    legend([t01(1), t02(1)], ["highest rated", "lowest rated"])
+
+% % CoG Experiments
+% figure("Name", "CoG?")
+% plot3(flyer.cog{1}(:, 1)/1000, flyer.cog{1}(:, 2)/1000, flyer.cog{1}(:, 3)/1000)
+% hold on
+% grid on
+% plot3(flyer.cog{9}(:, 1)/1000, flyer.cog{9}(:, 2)/1000, flyer.cog{9}(:, 3)/1000)
+% plot3(flyer.cog{28}(:, 1)/1000, flyer.cog{28}(:, 2)/1000, flyer.cog{28}(:, 3)/1000)
+% legend("1", "9", "28")
+% xlabel("x")
+% ylabel("y")
+% zlabel("z")
+
+
+%% FUNCTIONS
+% function plotting(data, )
+% end
+
+function cog = CoG_Base(athlete, col)
+% DEFINE SEGMENT COGs
+% upper body
+C07V = [athlete.C07V.interp.x(:, col), athlete.C07V.interp.y(:, col), athlete.C07V.interp.z(:, col)];
+RSHO = [athlete.RSHO.interp.x(:, col), athlete.RSHO.interp.y(:, col), athlete.RSHO.interp.z(:, col)];
+LSHO = [athlete.LSHO.interp.x(:, col), athlete.LSHO.interp.y(:, col), athlete.LSHO.interp.z(:, col)];
+RELB = [athlete.RELB.interp.x(:, col), athlete.RELB.interp.y(:, col), athlete.RELB.interp.z(:, col)];
+LELB = [athlete.LELB.interp.x(:, col), athlete.LELB.interp.y(:, col), athlete.LELB.interp.z(:, col)];
+RWRA = [athlete.RWRA.interp.x(:, col), athlete.RWRA.interp.y(:, col), athlete.RWRA.interp.z(:, col)];
+RWRB = [athlete.RWRB.interp.x(:, col), athlete.RWRB.interp.y(:, col), athlete.RWRB.interp.z(:, col)];
+LWRA = [athlete.LWRA.interp.x(:, col), athlete.LWRA.interp.y(:, col), athlete.LWRA.interp.z(:, col)];
+LWRB = [athlete.LWRB.interp.x(:, col), athlete.LWRB.interp.y(:, col), athlete.LWRB.interp.z(:, col)];
+RFIN = [athlete.RFIN.interp.x(:, col), athlete.RFIN.interp.y(:, col), athlete.RFIN.interp.z(:, col)];
+LFIN = [athlete.LFIN.interp.x(:, col), athlete.LFIN.interp.y(:, col), athlete.LFIN.interp.z(:, col)];
+% lower body
+RASI = [athlete.RASI.interp.x(:, col), athlete.RASI.interp.y(:, col), athlete.RASI.interp.z(:, col)];
+RPSI = [athlete.RPSI.interp.x(:, col), athlete.RPSI.interp.y(:, col), athlete.RPSI.interp.z(:, col)];
+LPSI = [athlete.LPSI.interp.x(:, col), athlete.LPSI.interp.y(:, col), athlete.LPSI.interp.z(:, col)];
+LASI = [athlete.LASI.interp.x(:, col), athlete.LASI.interp.y(:, col), athlete.LASI.interp.z(:, col)];
+PELV = [sum( [RASI(:, 1), RPSI(:, 1), LPSI(:, 1), LASI(:, 1)], 2) /4, ...
+    sum( [RASI(:, 2), RPSI(:, 2), LPSI(:, 2), LASI(:, 2)], 2) /4, ...
+    sum( [RASI(:, 3), RPSI(:, 3), LPSI(:, 3), LASI(:, 3)], 2) /4];
+RHIP = [sum( [RASI(:, 1), RPSI(:, 1)], 2) /2, sum( [RASI(:, 2), RPSI(:, 2)], 2) /2, ...
+    sum( [RASI(:, 3), RPSI(:, 3)], 2) /2];
+LHIP = [sum( [LASI(:, 1), LPSI(:, 1)], 2) /2, sum( [LASI(:, 2), LPSI(:, 2)], 2) /2, ...
+    sum( [LASI(:, 3), LPSI(:, 3)], 2) /2];
+RKNE = [athlete.RKNE.interp.x(:, col), athlete.RKNE.interp.y(:, col), athlete.RKNE.interp.z(:, col)];
+LKNE = [athlete.LKNE.interp.x(:, col), athlete.LKNE.interp.y(:, col), athlete.LKNE.interp.z(:, col)];
+RANK = [athlete.RANK.interp.x(:, col), athlete.RANK.interp.y(:, col), athlete.RANK.interp.z(:, col)];
+LANK = [athlete.LANK.interp.x(:, col), athlete.LANK.interp.y(:, col), athlete.LANK.interp.z(:, col)];
+RHEE = [athlete.RHEE.interp.x(:, col), athlete.RHEE.interp.y(:, col), athlete.RHEE.interp.z(:, col)];
+LHEE = [athlete.LHEE.interp.x(:, col), athlete.LHEE.interp.y(:, col), athlete.LHEE.interp.z(:, col)];
+RTOE = [athlete.RTOE.interp.x(:, col), athlete.RTOE.interp.y(:, col), athlete.RTOE.interp.z(:, col)];
+LTOE = [athlete.LTOE.interp.x(:, col), athlete.LTOE.interp.y(:, col), athlete.LTOE.interp.z(:, col)];
+
+% distal - proximal
+% CoG = distant / (distant + proximal)
+cogTrunk = (C07V - PELV) * 0.5;
+cogUpperR = (RELB - RSHO) * 0.436;
+cogUpperL = (LELB - LSHO) * 0.436;
+cogForeR = (RFIN - RELB) * 0.43;
+cogForeL = (LFIN - LELB) * 0.43;
+cogThighR = (RKNE - RHIP) * 0.433;
+cogThighL = (LKNE - LHIP) * 0.433;
+cogShinR = (RANK - RKNE) * 0.433;
+cogShinL = (LANK - LKNE) * 0.433;
+cogFootR = (RTOE - RHEE) * 0.45;
+cogFootL = (LTOE - LHEE) * 0.45;
+
+% DEFINE WEIGHTING
+wTrunk = 0.458;
+wUpperArm = 0.033;
+wForearm = 0.025; % incl. hand
+wThigh = 0.105;
+wShin = 0.045;
+wFoot = 0.015;
+
+cog(:, 1) = sum([cogTrunk(:, 1) * wTrunk, ...
+    cogUpperR(:, 1) * wUpperArm,    cogUpperL(:, 1) * wUpperArm, ...
+    cogForeR(:, 1) * wForearm,      cogForeL(:, 1) * wForearm, ...
+    cogThighR(:, 1) * wThigh,       cogThighL(:, 1) * wThigh, ...
+    cogShinR(:, 1) * wShin,         cogShinL(:, 1) * wShin, ...
+    cogFootR(:, 1) * wFoot,         cogFootL(:, 1) * wFoot], ...
+    2) / (2*sum([wUpperArm, wForearm, wThigh, wShin, wFoot]) + wTrunk);
+cog(:, 2) = sum([cogTrunk(:, 2) * wTrunk, ...
+    cogUpperR(:, 2) * wUpperArm,    cogUpperL(:, 2) * wUpperArm, ...
+    cogForeR(:, 2) * wForearm,      cogForeL(:, 2) * wForearm, ...
+    cogThighR(:, 2) * wThigh,       cogThighL(:, 2) * wThigh, ...
+    cogShinR(:, 2) * wShin,         cogShinL(:, 2) * wShin, ...
+    cogFootR(:, 2) * wFoot,         cogFootL(:, 2) * wFoot], ...
+    2) / (2*sum([wUpperArm, wForearm, wThigh, wShin, wFoot]) + wTrunk);
+cog(:, 3) = sum([cogTrunk(:, 3) * wTrunk, ...
+    cogUpperR(:, 3) * wUpperArm,    cogUpperL(:, 3) * wUpperArm, ...
+    cogForeR(:, 3) * wForearm,      cogForeL(:, 3) * wForearm, ...
+    cogThighR(:, 3) * wThigh,       cogThighL(:, 3) * wThigh, ...
+    cogShinR(:, 3) * wShin,         cogShinL(:, 3) * wShin, ...
+    cogFootR(:, 3) * wFoot,         cogFootL(:, 3) * wFoot], ...
+    2) / (2*sum([wUpperArm, wForearm, wThigh, wShin, wFoot]) + wTrunk);
 end
 
-maxLength = max(length(NL01.ASIS_F), length(NL02.ASIS_F), length(NL03.ASIS_F), length(NL04.ASIS_F));
-plot(length(NL01.ASIS_F), NL02.ASIS_F, NL03.ASIS_F, NL04.ASIS_F)
+function cog = CoG_Flyer(athlete, col)
+% DEFINE SEGMENT COGs
+% upper body
+C07V = [athlete.C07V.interp.x(:, col), athlete.C07V.interp.y(:, col), athlete.C07V.interp.z(:, col)];
+RSHO = [athlete.RSHO.interp.x(:, col), athlete.RSHO.interp.y(:, col), athlete.RSHO.interp.z(:, col)];
+LSHO = [athlete.LSHO.interp.x(:, col), athlete.LSHO.interp.y(:, col), athlete.LSHO.interp.z(:, col)];
+RELB = [athlete.RELB.interp.x(:, col), athlete.RELB.interp.y(:, col), athlete.RELB.interp.z(:, col)];
+LELB = [athlete.LELB.interp.x(:, col), athlete.LELB.interp.y(:, col), athlete.LELB.interp.z(:, col)];
+RWRA = [athlete.RWRA.interp.x(:, col), athlete.RWRA.interp.y(:, col), athlete.RWRA.interp.z(:, col)];
+RWRB = [athlete.RWRB.interp.x(:, col), athlete.RWRB.interp.y(:, col), athlete.RWRB.interp.z(:, col)];
+LWRA = [athlete.LWRA.interp.x(:, col), athlete.LWRA.interp.y(:, col), athlete.LWRA.interp.z(:, col)];
+LWRB = [athlete.LWRB.interp.x(:, col), athlete.LWRB.interp.y(:, col), athlete.LWRB.interp.z(:, col)];
+RFIN = [athlete.RFIN.interp.x(:, col), athlete.RFIN.interp.y(:, col), athlete.RFIN.interp.z(:, col)];
+LFIN = [athlete.LFIN.interp.x(:, col), athlete.LFIN.interp.y(:, col), athlete.LFIN.interp.z(:, col)];
+% lower body
+ASIS = [athlete.ASIS.interp.x(:, col), athlete.ASIS.interp.y(:, col), athlete.ASIS.interp.z(:, col)];
+RPSI = [athlete.RPSI.interp.x(:, col), athlete.RPSI.interp.y(:, col), athlete.RPSI.interp.z(:, col)];
+LPSI = [athlete.LPSI.interp.x(:, col), athlete.LPSI.interp.y(:, col), athlete.LPSI.interp.z(:, col)];
+PELV = [sum( [ASIS(:, 1), RPSI(:, 1), LPSI(:, 1)], 2) /3, ...
+        sum( [ASIS(:, 2), RPSI(:, 2), LPSI(:, 2)], 2) /3, ...
+        sum( [ASIS(:, 3), RPSI(:, 3), LPSI(:, 3)], 2) /3];
+RHIP = [sum( [ASIS(:, 1), RPSI(:, 1)], 2) /2, ...
+        sum( [ASIS(:, 2), RPSI(:, 2)], 2) /2, ...
+        sum( [ASIS(:, 3), RPSI(:, 3)], 2) /2];
+LHIP = [sum( [ASIS(:, 1), LPSI(:, 1)], 2) /2, ...
+        sum( [ASIS(:, 2), LPSI(:, 2)], 2) /2, ...
+        sum( [ASIS(:, 3), LPSI(:, 3)], 2) /2];
+RKNE = [athlete.RKNE.interp.x(:, col), athlete.RKNE.interp.y(:, col), athlete.RKNE.interp.z(:, col)];
+LKNE = [athlete.LKNE.interp.x(:, col), athlete.LKNE.interp.y(:, col), athlete.LKNE.interp.z(:, col)];
+RANK = [athlete.RANK.interp.x(:, col), athlete.RANK.interp.y(:, col), athlete.RANK.interp.z(:, col)];
+LANK = [athlete.LANK.interp.x(:, col), athlete.LANK.interp.y(:, col), athlete.LANK.interp.z(:, col)];
+RHEE = [athlete.RHEE.interp.x(:, col), athlete.RHEE.interp.y(:, col), athlete.RHEE.interp.z(:, col)];
+LHEE = [athlete.LHEE.interp.x(:, col), athlete.LHEE.interp.y(:, col), athlete.LHEE.interp.z(:, col)];
+RTOE = [athlete.RTOE.interp.x(:, col), athlete.RTOE.interp.y(:, col), athlete.RTOE.interp.z(:, col)];
+LTOE = [athlete.LTOE.interp.x(:, col), athlete.LTOE.interp.y(:, col), athlete.LTOE.interp.z(:, col)];
 
-%% 
+% distal - proximal
+% CoG = distant / (distant + proximal)
+cogTrunk = (C07V - PELV) * 0.5;
+cogUpperR = (RELB - RSHO) * 0.436;
+cogUpperL = (LELB - LSHO) * 0.436;
+cogForeR = (RFIN - RELB) * 0.43;
+cogForeL = (LFIN - LELB) * 0.43;
+cogThighR = (RKNE - RHIP) * 0.433;
+cogThighL = (LKNE - LHIP) * 0.433;
+cogShinR = (RANK - RKNE) * 0.433;
+cogShinL = (LANK - LKNE) * 0.433;
+cogFootR = (RTOE - RHEE) * 0.45;
+cogFootL = (LTOE - LHEE) * 0.45;
+
+% DEFINE WEIGHTING
+wTrunk = 0.463;
+wUpperArm = 0.03;
+wForearm = 0.02; % incl. hand
+wThigh = 0.115;
+wShin = 0.053;
+wFoot = 0.012;
+
+cog(:, 1) = sum([cogTrunk(:, 1) * wTrunk, ...
+    cogUpperR(:, 1) * wUpperArm,    cogUpperL(:, 1) * wUpperArm, ...
+    cogForeR(:, 1) * wForearm,      cogForeL(:, 1) * wForearm, ...
+    cogThighR(:, 1) * wThigh,       cogThighL(:, 1) * wThigh, ...
+    cogShinR(:, 1) * wShin,         cogShinL(:, 1) * wShin, ...
+    cogFootR(:, 1) * wFoot,         cogFootL(:, 1) * wFoot], ...
+    2) / (2*sum([wUpperArm, wForearm, wThigh, wShin, wFoot]) + wTrunk);
+cog(:, 2) = sum([cogTrunk(:, 2) * wTrunk, ...
+    cogUpperR(:, 2) * wUpperArm,    cogUpperL(:, 2) * wUpperArm, ...
+    cogForeR(:, 2) * wForearm,      cogForeL(:, 2) * wForearm, ...
+    cogThighR(:, 2) * wThigh,       cogThighL(:, 2) * wThigh, ...
+    cogShinR(:, 2) * wShin,         cogShinL(:, 2) * wShin, ...
+    cogFootR(:, 2) * wFoot,         cogFootL(:, 2) * wFoot], ...
+    2) / (2*sum([wUpperArm, wForearm, wThigh, wShin, wFoot]) + wTrunk);
+cog(:, 3) = sum([cogTrunk(:, 3) * wTrunk, ...
+    cogUpperR(:, 3) * wUpperArm,    cogUpperL(:, 3) * wUpperArm, ...
+    cogForeR(:, 3) * wForearm,      cogForeL(:, 3) * wForearm, ...
+    cogThighR(:, 3) * wThigh,       cogThighL(:, 3) * wThigh, ...
+    cogShinR(:, 3) * wShin,         cogShinL(:, 3) * wShin, ...
+    cogFootR(:, 3) * wFoot,         cogFootL(:, 3) * wFoot], ...
+    2) / (2*sum([wUpperArm, wForearm, wThigh, wShin, wFoot]) + wTrunk);
+end
+
+function hipAngle = HipAngleFlyer(athlete, col)
+% Define relevant parameters
+CLAV = [athlete.CLAV.interp.x(:, col), ...
+    athlete.CLAV.interp.y(:, col), athlete.CLAV.interp.z(:, col)];
+STRN = [athlete.STRN.interp.x(:, col), athlete.STRN.interp.y(:, col), athlete.STRN.interp.z(:, col)];
+CHEST = [ sum([CLAV(:, 1), STRN(:, 1)], 2) / 2, ...
+        sum([CLAV(:, 2), STRN(:, 2)], 2) / 2, ...
+        sum([CLAV(:, 3), STRN(:, 3)], 2) / 2 ];
+ASIS = [athlete.ASIS.interp.x(:, col), athlete.ASIS.interp.y(:, col), athlete.ASIS.interp.z(:, col)];
+RPSI = [athlete.RPSI.interp.x(:, col), athlete.RPSI.interp.y(:, col), athlete.RPSI.interp.z(:, col)];
+LPSI = [athlete.LPSI.interp.x(:, col), athlete.LPSI.interp.y(:, col), athlete.LPSI.interp.z(:, col)];
+PELV = [sum( [ASIS(:, 1), RPSI(:, 1), LPSI(:, 1)], 2) /3, ...
+        sum( [ASIS(:, 2), RPSI(:, 2), LPSI(:, 2)], 2) /3, ...
+        sum( [ASIS(:, 3), RPSI(:, 3), LPSI(:, 3)], 2) /3];
+RKNE = [athlete.RKNE.interp.x(:, col), athlete.RKNE.interp.y(:, col), athlete.RKNE.interp.z(:, col)];
+LKNE = [athlete.LKNE.interp.x(:, col), athlete.LKNE.interp.y(:, col), athlete.LKNE.interp.z(:, col)];
+KNEE = [sum( [RKNE(:, 1), LKNE(:, 1)], 2) /2, ...
+        sum( [RKNE(:, 2), LKNE(:, 2)], 2) /2, ...
+        sum( [RKNE(:, 3), LKNE(:, 3)], 2) /2];
+torso = CHEST - PELV;
+legs = KNEE - PELV;
+% Calculation of the angle using the scalar product
+nFrames = length(torso);
+for i = 1 : nFrames
+    % scalar product:
+    scalProd(i, 1) = dot(legs(i), torso(i));
+    lengthTorso(i, 1) = norm(torso(i, :));
+    lengthLegs(i, 1) = norm(legs(i, :));
+    % phi in radians (phi) and degrees (ohiD)
+    hipAngle(i) = acosd(scalProd(i) / (lengthTorso(i) * lengthLegs(i)));
+end
+
+plot3(torso(1, 1), torso(1, 2), torso(1, 3), 'or')
+hold on
+grid on
+plot3(PELV(1, 1), PELV(1, 2), PELV(1, 3), 'ok')
+plot3(legs(1, 1), legs(1, 2), legs(1, 3), 'ob')
+plot3([PELV(1, 1), legs(1, 1)], [PELV(1, 2), legs(1, 2)], [PELV(1, 3), legs(1, 3)])
+plot3([PELV(1, 1), torso(1, 1)], [PELV(1, 2), torso(1, 2)], [PELV(1, 3), torso(1, 3)])
+legend("torso", "legs", "PELV")
+
+end %func
+
+
